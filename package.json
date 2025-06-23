@@ -1,0 +1,42 @@
+{
+  "name": "karma-echoes-of-tomorrow",
+  "version": "1.0.0",
+  "description": "An open-world narrative RPG where your past writes the future through karmic mechanics and AI-powered prediction",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "jest",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "three": "^0.158.0",
+    "@react-three/fiber": "^8.15.11",
+    "@react-three/drei": "^9.88.13",
+    "zustand": "^4.4.7",
+    "framer-motion": "^10.16.5",
+    "uuid": "^9.0.1",
+    "date-fns": "^2.30.0",
+    "react-router-dom": "^6.20.1",
+    "react-hot-toast": "^2.4.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.1.1",
+    "vite": "^5.0.0"
+  },
+  "keywords": [
+    "game",
+    "rpg",
+    "karma",
+    "ai",
+    "narrative",
+    "open-world",
+    "react",
+    "threejs"
+  ],
+  "author": "Game Developer",
+  "license": "MIT"
+} 

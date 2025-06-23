@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/karma-icon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Karma: Echoes of Tomorrow - An open-world narrative RPG where your past writes the future" />
+    <meta name="keywords" content="game, rpg, karma, ai, narrative, open-world" />
+    <title>Karma: Echoes of Tomorrow</title>
+    
+    <!-- CDN Dependencies -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/@react-three/fiber@8.15.11/dist/react-three-fiber.umd.js"></script>
+    <script src="https://unpkg.com/@react-three/drei@9.88.13/dist/drei.umd.js"></script>
+    <script src="https://unpkg.com/zustand@4.4.7/umd/index.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.5/dist/framer-motion.js"></script>
+    <script src="https://unpkg.com/uuid@9.0.1/dist/umd/uuidv4.min.js"></script>
+    <script src="https://unpkg.com/date-fns@2.30.0/index.js"></script>
+    <script src="https://unpkg.com/react-router-dom@6.20.1/dist/umd/react-router-dom.production.min.js"></script>
+    
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+        color: #ffffff;
+        overflow: hidden;
+      }
+      
+      #root {
+        width: 100vw;
+        height: 100vh;
+      }
+      
+      .loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+      
+      .loading-text {
+        font-size: 2rem;
+        color: #64ffda;
+        margin-bottom: 2rem;
+        text-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+      }
+      
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid #64ffda;
+        border-top: 3px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      /* Game Styles */
+      .game-container {
+        width: 100vw;
+        height: 100vh;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .main-menu {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .title {
+        font-size: 4rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #64ffda, #a78bfa, #60a5fa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 0 30px rgba(100, 255, 218, 0.5);
+        text-align: center;
+      }
+
+      .subtitle {
+        font-size: 1.5rem;
+        color: #a0a0a0;
+        font-style: italic;
+        margin-bottom: 2rem;
+        text-align: center;
+      }
+
+      .tagline {
+        font-size: 1.2rem;
+        color: #64ffda;
+        font-weight: 300;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        text-align: center;
+        margin-bottom: 3rem;
+      }
+
+      .menu-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: center;
+      }
+
+      .menu-button {
+        background: linear-gradient(135deg, rgba(100, 255, 218, 0.1), rgba(167, 139, 250, 0.1));
+        border: 2px solid #64ffda;
+        color: #64ffda;
+        padding: 1rem 3rem;
+        font-size: 1.2rem;
+        font-weight: 500;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        min-width: 250px;
+        font-family: 'Inter', sans-serif;
+        letter-spacing: 1px;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+      }
+
+      .menu-button:hover {
+        background: linear-gradient(135deg, rgba(100, 255, 218, 0.2), rgba(167, 139, 250, 0.2));
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(100, 255, 218, 0.3);
+      }
+
+      .floating-particles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: #64ffda;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(100, 255, 218, 0.8);
+        animation: float 3s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); opacity: 0.3; }
+        50% { transform: translateY(-20px); opacity: 1; }
+      }
+
+      .karma-display {
+        position: absolute;
+        top: 2rem;
+        right: 2rem;
+        background: rgba(26, 26, 46, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(100, 255, 218, 0.3);
+        border-radius: 1rem;
+        padding: 1rem;
+        text-align: center;
+        z-index: 3;
+      }
+
+      .karma-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #64ffda;
+      }
+
+      .version-info {
+        position: absolute;
+        bottom: 1rem;
+        right: 1rem;
+        color: #666;
+        font-size: 0.8rem;
+        z-index: 3;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="loading-screen">
+        <div class="loading-text">Karma: Echoes of Tomorrow</div>
+        <div class="loading-spinner"></div>
+      </div>
+    </div>
+
+    <script>
+      // Simple Karma Store (simplified version)
+      const createKarmaStore = () => {
+        let state = {
+          karmicHistory: [],
+          currentKarma: 0,
+          karmaLevel: 'neutral',
+          reincarnationCount: 0,
+          pastLives: [],
+          characterId: crypto.randomUUID()
+        };
+
+        const getKarmaLevel = (karma) => {
+          if (karma >= 200) return 'enlightened';
+          if (karma >= 100) return 'benevolent';
+          if (karma <= -200) return 'corrupted';
+          if (karma <= -100) return 'shadowed';
+          return 'neutral';
+        };
+
+        return {
+          getState: () => state,
+          recordKarmicAction: (actionType, context = {}) => {
+            const karmaValues = {
+              SAVE_LIFE: 50,
+              HELP_STRANGER: 15,
+              DONATE: 10,
+              PROTECT_INNOCENT: 25,
+              FORGIVE: 20,
+              HEAL: 30,
+              KILL_INNOCENT: -100,
+              STEAL: -20,
+              LIE: -5,
+              BETRAY: -40,
+              DESTROY_SACRED: -60,
+              ABANDON: -15,
+              SELF_DEFENSE: 0,
+              TRADE: 0,
+              EXPLORE: 2,
+              LEARN: 5
+            };
+
+            const karmaValue = karmaValues[actionType] || 0;
+            const timestamp = new Date().toISOString();
+            
+            const karmicEntry = {
+              id: crypto.randomUUID(),
+              actionType,
+              karmaValue,
+              description: actionType.replace(/_/g, ' ').toLowerCase(),
+              context,
+              timestamp,
+              characterId: state.characterId
+            };
+
+            state.karmicHistory.push(karmicEntry);
+            state.currentKarma = state.karmicHistory.reduce((sum, entry) => sum + entry.karmaValue, 0);
+            state.karmaLevel = getKarmaLevel(state.currentKarma);
+
+            // Show notification
+            showNotification(`${karmicEntry.description} (${karmaValue > 0 ? '+' : ''}${karmaValue} karma)`);
+          },
+          reincarnate: () => {
+            const pastLife = {
+              id: crypto.randomUUID(),
+              characterId: state.characterId,
+              karmaLevel: state.karmaLevel,
+              finalKarma: state.currentKarma,
+              actions: state.karmicHistory.length,
+              timestamp: new Date().toISOString()
+            };
+
+            state.pastLives.push(pastLife);
+            state.karmicHistory = [];
+            state.currentKarma = 0;
+            state.karmaLevel = 'neutral';
+            state.reincarnationCount += 1;
+            state.characterId = crypto.randomUUID();
+
+            showNotification('You have been reincarnated! 🔄');
+          }
+        };
+      };
+
+      const karmaStore = createKarmaStore();
+
+      // Notification system
+      function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: rgba(26, 26, 46, 0.9);
+          color: #ffffff;
+          padding: 1rem 1.5rem;
+          border-radius: 0.5rem;
+          border: 1px solid #64ffda;
+          z-index: 1000;
+          animation: slideIn 0.3s ease-out;
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+          notification.style.animation = 'slideOut 0.3s ease-in';
+          setTimeout(() => document.body.removeChild(notification), 300);
+        }, 3000);
+      }
+
+      // Add CSS animations
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(100%); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+
+      // Main Menu Component
+      function MainMenu() {
+        const state = karmaStore.getState();
+        
+        // Create floating particles
+        const particles = Array.from({ length: 20 }, (_, i) => ({
+          id: i,
+          x: Math.random() * 100,
+          y: Math.random() * 100,
+          delay: Math.random() * 2,
+          duration: 3 + Math.random() * 2
+        }));
+
+        const handleNewGame = () => {
+          karmaStore.recordKarmicAction('LEARN', { context: 'character_creation' });
+          showGameWorld();
+        };
+
+        const handleContinue = () => {
+          showGameWorld();
+        };
+
+        const handleKarmicLedger = () => {
+          showKarmicLedger();
+        };
+
+        const handleOracle = () => {
+          showOracle();
+        };
+
+        const handleReincarnate = () => {
+          karmaStore.reincarnate();
+          renderMainMenu();
+        };
+
+        return `
+          <div class="main-menu">
+            <div class="floating-particles">
+              ${particles.map(particle => `
+                <div class="particle" style="
+                  left: ${particle.x}%;
+                  top: ${particle.y}%;
+                  animation-delay: ${particle.delay}s;
+                  animation-duration: ${particle.duration}s;
+                "></div>
+              `).join('')}
+            </div>
+
+            <div class="title">Karma: Echoes of Tomorrow</div>
+            <div class="subtitle">An Open-World Narrative RPG</div>
+            <div class="tagline">Your Past Writes the Future</div>
+
+            <div class="menu-buttons">
+              <button class="menu-button" onclick="handleNewGame()">Begin New Journey</button>
+              ${state.currentKarma !== 0 ? `<button class="menu-button" onclick="handleContinue()">Continue Your Path</button>` : ''}
+              <button class="menu-button" onclick="handleKarmicLedger()">Mirror of Memory</button>
+              <button class="menu-button" onclick="handleOracle()">Consult the Oracle</button>
+              ${state.reincarnationCount > 0 ? `<button class="menu-button" onclick="handleReincarnate()">Reincarnate</button>` : ''}
+            </div>
+
+            ${state.currentKarma !== 0 ? `
+              <div class="karma-display">
+                <div class="karma-value">Karma: ${state.currentKarma}</div>
+                <div class="karma-value">Level: ${state.karmaLevel}</div>
+                ${state.reincarnationCount > 0 ? `<div class="karma-value">Lives: ${state.reincarnationCount + 1}</div>` : ''}
+              </div>
+            ` : ''}
+
+            <div class="version-info">v1.0.0 - The Karmic Awakening</div>
+          </div>
+        `;
+      }
+
+      // Game World Component
+      function GameWorld() {
+        const state = karmaStore.getState();
+
+        const handleAction = (actionType, label) => {
+          karmaStore.recordKarmicAction(actionType);
+        };
+
+        const handleReincarnation = () => {
+          karmaStore.reincarnate();
+          renderMainMenu();
+        };
+
+        return `
+          <div class="game-container">
+            <div style="position: absolute; top: 1rem; left: 1rem; right: 1rem; display: flex; justify-content: space-between; align-items: center;">
+              <div class="karma-display">
+                <div class="karma-value">Karma: ${state.currentKarma}</div>
+                <div class="karma-value">Level: ${state.karmaLevel}</div>
+              </div>
+              <div style="display: flex; gap: 1rem;">
+                <button class="menu-button" onclick="renderMainMenu()">Menu</button>
+                <button class="menu-button" onclick="handleKarmicLedger()">Karmic Ledger</button>
+                <button class="menu-button" onclick="handleOracle()">Oracle</button>
+              </div>
+            </div>
+
+            <div style="position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); background: rgba(26, 26, 46, 0.9); border: 1px solid rgba(100, 255, 218, 0.3); border-radius: 1rem; padding: 1.5rem; text-align: center;">
+              <div style="color: #64ffda; font-weight: 600; margin-bottom: 1rem;">Choose Your Actions</div>
+              <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+                <button class="menu-button" onclick="handleAction('HELP_STRANGER', 'Help Stranger')">Help Stranger</button>
+                <button class="menu-button" onclick="handleAction('DONATE', 'Donate')">Donate</button>
+                <button class="menu-button" onclick="handleAction('PROTECT_INNOCENT', 'Protect Innocent')">Protect Innocent</button>
+                <button class="menu-button" onclick="handleAction('STEAL', 'Steal')">Steal</button>
+                <button class="menu-button" onclick="handleAction('LIE', 'Tell a Lie')">Tell a Lie</button>
+                <button class="menu-button" onclick="handleAction('EXPLORE', 'Explore')">Explore</button>
+                <button class="menu-button" onclick="handleAction('LEARN', 'Learn')">Learn</button>
+              </div>
+              ${state.reincarnationCount > 0 ? `<button class="menu-button" onclick="handleReincarnation()" style="margin-top: 1rem; background: linear-gradient(135deg, #a78bfa, #60a5fa); color: #ffffff; border: none;">Reincarnate</button>` : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      // Karmic Ledger Component
+      function KarmicLedger() {
+        const state = karmaStore.getState();
+        const history = state.karmicHistory;
+
+        return `
+          <div style="min-height: 100vh; padding: 2rem; background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+              <h1 style="font-size: 3rem; background: linear-gradient(135deg, #64ffda, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0;">Mirror of Memory</h1>
+              <button class="menu-button" onclick="renderMainMenu()">Return to Menu</button>
+            </div>
+
+            <div style="background: rgba(26, 26, 46, 0.8); border: 1px solid rgba(100, 255, 218, 0.2); border-radius: 1rem; padding: 2rem; margin-bottom: 2rem;">
+              <h3 style="color: #64ffda; margin-bottom: 1rem;">Karmic Statistics</h3>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div style="text-align: center; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 0.5rem;">
+                  <div style="font-size: 2rem; color: #64ffda;">${state.currentKarma}</div>
+                  <div style="color: #a0a0a0;">Current Karma</div>
+                </div>
+                <div style="text-align: center; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 0.5rem;">
+                  <div style="font-size: 2rem; color: #64ffda;">${history.length}</div>
+                  <div style="color: #a0a0a0;">Total Actions</div>
+                </div>
+                <div style="text-align: center; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 0.5rem;">
+                  <div style="font-size: 2rem; color: #64ffda;">${state.karmaLevel}</div>
+                  <div style="color: #a0a0a0;">Karma Level</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="background: rgba(26, 26, 46, 0.8); border: 1px solid rgba(100, 255, 218, 0.2); border-radius: 1rem; padding: 2rem;">
+              <h3 style="color: #64ffda; margin-bottom: 1rem;">Karmic History</h3>
+              ${history.length === 0 ? 
+                '<div style="text-align: center; padding: 3rem; color: #a0a0a0;"><h4>No karmic actions recorded yet</h4><p>Begin your journey to see your karmic history here</p></div>' :
+                history.map(entry => `
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; margin-bottom: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 0.5rem; border-left: 4px solid ${entry.karmaValue > 0 ? '#64ffda' : entry.karmaValue < 0 ? '#ef4444' : '#a0a0a0'};">
+                    <div>
+                      <div style="font-weight: 500; color: #ffffff;">${entry.description}</div>
+                      <div style="font-size: 0.8rem; color: #666;">${new Date(entry.timestamp).toLocaleString()}</div>
+                    </div>
+                    <div style="font-weight: 700; font-size: 1.2rem; color: ${entry.karmaValue > 0 ? '#64ffda' : entry.karmaValue < 0 ? '#ef4444' : '#a0a0a0'};">
+                      ${entry.karmaValue > 0 ? '+' : ''}${entry.karmaValue}
+                    </div>
+                  </div>
+                `).join('')
+              }
+            </div>
+          </div>
+        `;
+      }
+
+      // Oracle Component
+      function Oracle() {
+        const state = karmaStore.getState();
+        const recentActions = state.karmicHistory.slice(-5);
+        const totalKarma = recentActions.reduce((sum, action) => sum + action.karmaValue, 0);
+
+        const getOracleMessage = () => {
+          if (totalKarma > 50) {
+            return {
+              message: "The threads of fate weave patterns unseen...",
+              hint: "A benevolent force will aid you in your journey",
+              confidence: 0.8,
+              timeframe: "2-5 hours"
+            };
+          } else if (totalKarma < -50) {
+            return {
+              message: "Echoes of your choices ripple through time...",
+              hint: "Dark forces gather against you",
+              confidence: 0.7,
+              timeframe: "1-3 hours"
+            };
+          } else {
+            return {
+              message: "The mirror of memory reflects what is to come...",
+              hint: "The future remains shrouded in mystery...",
+              confidence: 0.3,
+              timeframe: "unknown"
+            };
+          }
+        };
+
+        const oracle = getOracleMessage();
+
+        return `
+          <div style="min-height: 100vh; padding: 2rem; background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+              <h1 style="font-size: 3rem; background: linear-gradient(135deg, #64ffda, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0;">The Ancient Oracle</h1>
+              <button class="menu-button" onclick="renderMainMenu()">Return to Menu</button>
+            </div>
+
+            <div style="max-width: 800px; margin: 0 auto; background: rgba(26, 26, 46, 0.8); border: 2px solid #a78bfa; border-radius: 2rem; padding: 3rem; text-align: center;">
+              <div style="font-size: 1.5rem; color: #a78bfa; margin-bottom: 2rem; font-style: italic;">
+                "${oracle.message}"
+              </div>
+              <div style="font-size: 1.2rem; color: #ffffff; margin-bottom: 2rem; line-height: 1.6;">
+                ${oracle.hint}
+              </div>
+              <div style="display: flex; justify-content: space-around; margin-top: 2rem;">
+                <div style="text-align: center;">
+                  <div style="font-size: 1.5rem; color: #64ffda;">${Math.round(oracle.confidence * 100)}%</div>
+                  <div style="color: #a0a0a0;">Confidence</div>
+                </div>
+                <div style="text-align: center;">
+                  <div style="font-size: 1.5rem; color: #64ffda;">${oracle.timeframe}</div>
+                  <div style="color: #a0a0a0;">Timeframe</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 3rem; background: rgba(26, 26, 46, 0.8); border: 1px solid rgba(100, 255, 218, 0.2); border-radius: 1rem; padding: 2rem;">
+              <h3 style="color: #64ffda; margin-bottom: 1rem;">Recent Karmic Patterns</h3>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div style="text-align: center; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 0.5rem;">
+                  <div style="font-size: 1.5rem; color: ${totalKarma > 0 ? '#64ffda' : totalKarma < 0 ? '#ef4444' : '#a0a0a0'};">${totalKarma}</div>
+                  <div style="color: #a0a0a0;">Recent Karma</div>
+                </div>
+                <div style="text-align: center; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 0.5rem;">
+                  <div style="font-size: 1.5rem; color: #64ffda;">${recentActions.length}</div>
+                  <div style="color: #a0a0a0;">Recent Actions</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Navigation functions
+      function renderMainMenu() {
+        document.getElementById('root').innerHTML = MainMenu();
+      }
+
+      function showGameWorld() {
+        document.getElementById('root').innerHTML = GameWorld();
+      }
+
+      function showKarmicLedger() {
+        document.getElementById('root').innerHTML = KarmicLedger();
+      }
+
+      function showOracle() {
+        document.getElementById('root').innerHTML = Oracle();
+      }
+
+      // Global handlers
+      window.handleNewGame = () => {
+        karmaStore.recordKarmicAction('LEARN', { context: 'character_creation' });
+        showGameWorld();
+      };
+
+      window.handleContinue = () => {
+        showGameWorld();
+      };
+
+      window.handleKarmicLedger = () => {
+        showKarmicLedger();
+      };
+
+      window.handleOracle = () => {
+        showOracle();
+      };
+
+      window.handleReincarnate = () => {
+        karmaStore.reincarnate();
+        renderMainMenu();
+      };
+
+      // Initialize the game
+      setTimeout(() => {
+        renderMainMenu();
+      }, 2000);
+    </script>
+  </body>
+</html> 
